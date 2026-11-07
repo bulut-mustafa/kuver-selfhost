@@ -1,0 +1,17 @@
+Kuver
+Copyright (c) 2026 Mustafa Bulut
+
+The Kuver software (the server image ghcr.io/bulut-mustafa/kuver and the Kuver app) is licensed
+under the Elastic License 2.0 (ELv2), except files in folders named "ee", which are under the Kuver
+Commercial Licence and need a valid licence key.
+
+Full text of the Elastic License 2.0: https://www.elastic.co/licensing/elastic-license
+
+In short: you may use, copy, change and run Kuver for yourself and your business, for free. You may
+not provide Kuver to others as a hosted or managed service, and you may not remove or get around the
+licence-key checks.
+
+"Kuver" and the Kuver logo are trademarks and are not licensed under the ELv2.
+
+The files in this repository itself (install script, compose file and documentation) may be used
+and changed freely.

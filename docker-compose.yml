@@ -1,0 +1,59 @@
+# Kuver, self-hosted: the server and its database (and, optionally, automatic HTTPS).
+# Settings are in .env (install.sh writes it; or copy .env.example).
+#   docker compose up -d                       http://<this machine>:4000
+#   COMPOSE_PROFILES=https in .env             https://<KUVER_DOMAIN> with a free certificate
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kuver
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: kuver
+    volumes:
+      - kuver-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kuver -d kuver"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  server:
+    image: ghcr.io/bulut-mustafa/kuver:${KUVER_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://kuver:${POSTGRES_PASSWORD}@db:5432/kuver
+      SECURE_COOKIES: ${SECURE_COOKIES:-0}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+      KUVER_LICENSE_KEY: ${KUVER_LICENSE_KEY:-}
+      KUVER_OPEN_SIGNUP: ${KUVER_OPEN_SIGNUP:-0}
+      KUVER_TELEMETRY: ${KUVER_TELEMETRY:-on}
+      DIGEST_HOUR: ${DIGEST_HOUR:-22}
+      KUVER_DATA_DIR: /data
+    volumes:
+      - kuver-data:/data
+    ports:
+      - "${KUVER_PORT:-4000}:4000"
+
+  # Automatic HTTPS for a domain that points at this machine (ports 80 and 443 must be reachable).
+  https:
+    image: caddy:2-alpine
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on: [server]
+    environment:
+      KUVER_DOMAIN: ${KUVER_DOMAIN:-}
+    command: caddy reverse-proxy --from ${KUVER_DOMAIN:-localhost} --to server:4000
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - kuver-https:/data
+
+volumes:
+  kuver-db:
+  kuver-data:
+  kuver-https:
